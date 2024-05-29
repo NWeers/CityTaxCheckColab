@@ -1,0 +1,33 @@
+import pandas as pd
+from google.colab import files
+
+# Laden der XLS-Datei
+uploaded = files.upload()
+
+# Die Datei wurde als dictionary hochgeladen, das den Dateinamen als Schlüssel enthält
+file_path = next(iter(uploaded))
+
+# Lesen der XLS-Datei und Bereinigung
+try:
+    # Annahme, dass die relevanten Daten in der ersten Tabelle der XLS-Datei sind
+    data = pd.read_excel(file_path, sheet_name=0)
+    
+    # Extrahieren der relevanten Spalten (Zimmernummer in Spalte B und Packages in Spalte S)
+    data = data.iloc[:, [1, 18]]  # Spalte B ist Index 1 und Spalte S ist Index 18
+    data.columns = ['Zimmernummer', 'Packages']  # Umbenennen der Spalten
+
+    print("Erste Zeilen der XLS-Datei:")
+    print(data.head())
+
+    # Filtern der Zeilen, die keine numerischen Zimmernummern enthalten
+    data = data[pd.to_numeric(data['Zimmernummer'], errors='coerce').notnull()]
+    data['Zimmernummer'] = data['Zimmernummer'].astype(int)
+
+    # Filtern der Zeilen, die sowohl 'CITE' als auch 'CITI' enthalten
+    filtered_data = data[data['Packages'].str.contains('CITE', case=False, na=False) &
+                         data['Packages'].str.contains('CITI', case=False, na=False)]
+
+    print("Zimmernummern mit doppelter Citytax:")
+    print(filtered_data['Zimmernummer'])
+except Exception as e:
+    print(f"Fehler beim Lesen der XLS-Datei: {e}")
